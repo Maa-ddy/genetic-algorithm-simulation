@@ -13,6 +13,9 @@ The cell's dna has the following properties:
 	<li>move noise (distraction on the movement of the cell)</li>
 	<li>age (for recording purposes)</li>
 </ul>
+<p><b>Screenshot</b></p>
+![Alt text](screen.png?raw=true "Screenshot")
+
 <p>The algorithm will converge to a solution that will be the most fit to stay alive: <br/>
 Eats enough food and avoids poison as possible.
 </p>
