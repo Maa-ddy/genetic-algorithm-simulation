@@ -4,7 +4,7 @@ Installation
 ------------
 Dependencies:  
 
-	pip3 install requirements.txt  
+	pip3 install -r requirements.txt  
 Run:  
 
 	python3 sim.py  
