@@ -23,14 +23,13 @@ max_cell_radius = 40
 max_health = 200
 reproduction_rate = 0.001
 max_population = 20
-max_food = 500
-poison_generation_rate = 0.05
 default_noise = [0,0]
 default_vision_for_food = 100
 default_vision_for_poison = 50
 default_desire_for_food = 5
 default_desire_for_poison = -2
-default_dna = [10, default_noise[:], default_vision_for_food, 30, default_desire_for_food, 0, 1]
+default_dna = [100, [-0.5507788056568753, -0.00027124180632860667], 107, 18, 4, -4, 1]
+#default_dna = [10, default_noise[:], default_vision_for_food, 30, default_desire_for_food, 0, 1]
 mutation_radius_range = 0.5
 mutation_vision_range = 2
 mutation_desire_range = 0.05
@@ -40,9 +39,7 @@ def sign(a):
 	#just a helper function
 	return 1 if a > 0 else -1
 
-food = []
-poison = []
-population = []
+
 
 class Cell():
 	def __init__(self, x, y, dna=default_dna):
@@ -179,45 +176,98 @@ class Cell():
 		if x < 0 or x > width or y < 0 or y > height or self.health <= 0:
 			self.die()
 
-for k in range(50):
-	random_pos = tuple(map(int, (10+random()*(width-10), 10+random()*(height-10))))
-	if random() < 0.1:
-		poison.append(random_pos)
-	else:
-		food.append(random_pos)
 
-for k in range(10):
-	x, y = list(map(int,[20+random()*(width-20) , 20+random()*(height-20)]))
-	population.append(Cell(x,y))
+class DisplayObj():
+	
+	def __init__(self, cell):
+		self.cell = cell
+		self.color = cell.color
+		self.radius = cell.radius
+		self.pos = cell.pos
 
-def generate_food():
-	if len(food) < max_food:
-		random_pos = tuple(map(int, (10+random()*(width-10), 10+random()*(height-10))))
-		if random() < poison_generation_rate:
-			poison.append(random_pos)
-		else:
-			food.append(random_pos)
-def generate_cells():
-	if len(population) < 4 or random() < 0.001:
-		random_pos = tuple(map(int, (10+random()*(height-10), 10+random()*(width-10))))
-		random_dna = [int(random()*max_cell_radius) + 4, [uniform(-2,2), uniform(-2,2)], int(random()*default_vision_for_food) + 5, int(random()*default_vision_for_poison) + 5, int(uniform(-default_desire_for_food, default_desire_for_food))+1, int(uniform(-default_desire_for_poison, default_desire_for_poison))-1 , 1]
-		population.append(Cell(*random_pos, random_dna))
+	def render(self):
+		pygame.draw.circle(canvas, self.color, self.pos, self.radius, 0)
 
-for k in range(30):
-	generate_food()
+
+
+class Simulation():
+	max_food = 5000
+	poison_generation_rate = 0.1
+	
+	def __init__(self):
+		self.food = []
+		self.poison = []
+		self.population = []
+		self.init_food(count=30)
+		self.init_population(count=10)
+	
+	def init_food(self, count=30):
+		for k in range(count):
+			self.generate_food()
+
+	def init_population(self, count=10):
+		for k in range(count):
+			x, y = list(map(int,[20 + random() * (width - 20) , 20 + random() * (height - 20)]))
+			self.population.append(Cell(x,y))
+	
+	def generate_food(self):
+		if len(self.food) <= Simulation.max_food:
+			random_pos = tuple(map(int, (10 + random() * (width - 10), 10 + random() * (height - 10))))
+			if random() < Simulation.poison_generation_rate:
+				self.poison.append(random_pos)
+			else:
+				self.food.append(random_pos)
+	
+	def refresh_population(self):
+		if len(self.population) < 4 or random() < 0.001:
+			random_pos = tuple(map(int, (10+random()*(height-10), 10+random()*(width-10))))
+			random_dna = [
+				int(random() * max_cell_radius) + 4, 
+				[uniform(-2, 2), uniform(-2, 2)], 
+				int(random() * default_vision_for_food) + 5, 
+				int(random() * default_vision_for_poison) + 5, 
+				int(uniform(-default_desire_for_food, default_desire_for_food))+1, 
+				int(uniform(-default_desire_for_poison, default_desire_for_poison)) - 1,
+				1
+			]
+			self.population.append(Cell(*random_pos, random_dna))
+	
+	def update_population(self):
+		for cell in self.population:
+			cell.update()
+		
+
+class Gui():
+	queue = []
+	
+	def __init__(self):
+		pass
+
+	def push(self, display_obj):
+		self.queue.append(display_obj)
+	
+	def clear(self):
+		canvas.fill(black)
+	
+	def render(self):
+		self.clear()
+		for display_obj in self.queue:
+			display_obj.render()
+		self.queue = []
+		pygame.display.update()
+
 
 running = True
 while running:
 	canvas.fill(black)
 	#__________________________________________________________________________________________
 	generate_food()
+	generate_food()
 	generate_cells()
-	for cell in population:
-		cell.update()
 	for meal in food:
 		pygame.draw.circle(canvas, green, meal, 5, 2)
-	for p in poison:
-		pygame.draw.circle(canvas, orange, p, 5)
+	for potion in poison:
+		pygame.draw.circle(canvas, orange, potion, 5)
 	#__________________________________________________________________________________________
 	pygame.display.update()
 	clock.tick(fps)
