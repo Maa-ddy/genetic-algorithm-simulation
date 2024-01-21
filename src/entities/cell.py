@@ -1,46 +1,9 @@
-import pygame
-from random import random, uniform
-from math import sqrt
-import numpy
-
-#generic properties
-width = 1000
-height = 800
-dimensions = (width, height)
-fps = 30
-canvas = pygame.display.set_mode(dimensions)
-clock = pygame.time.Clock()
-#colors:
-black = (0,0,0)
-cyan = (66, 244, 176)
-green = (90, 240, 40)
-orange = (240, 110, 40)
-blue = (7, 90, 180)
-red = (220, 10, 40)
-cell_color = cyan
-#/colors
-max_cell_radius = 40
-reproduction_rate = 0.001
-max_population = 20
-default_noise = [0,0]
-default_vision_for_food = 100
-default_vision_for_poison = 50
-default_desire_for_food = 5
-default_desire_for_poison = -2
-default_dna = [100, [-0.5507788056568753, -0.00027124180632860667], 107, 18, 4, -4, 1]
-#default_dna = [10, default_noise[:], default_vision_for_food, 30, default_desire_for_food, 0, 1]
-mutation_radius_range = 0.5
-mutation_vision_range = 2
-mutation_desire_range = 0.05
-#/generic properties
-
-def sign(a):
-	#just a helper function
-	return 1 if a > 0 else -1
-
-
+from .domain_events import DomainEventsQueue, NewbornCellEvent, CellDeathEvent
 
 class Cell():
+
+	max_health = 200
+	
 	def __init__(self, x, y, dna=default_dna):
 		self.pos = numpy.array([x,y])
 		self.color = cell_color
@@ -52,17 +15,18 @@ class Cell():
 		#dna here:
 		self.dna = dna[:]
 		self.radius, self.move_noise, self.vision_for_food, self.vision_for_poison, self.desire_for_food, self.desire_for_poison, self.age = dna
-
+		
+		DomainEventsQueue().push(NewbornCellEvent(self))
+	
 	def selection(self):
-		if random() < reproduction_rate and len(population) < max_population:
+		if random() < reproduction_rate:
 			self.dna[-1] = self.age
 			dna = self.crossover()
 			dna = self.mutation(dna)
-			population.append(Cell(self.pos[0], self.pos[1], dna))
+			return Cell(*self.pos, dna)
 
 
 	def crossover(self):
-		#we return dna itself, because the cell mates with itself
 		return self.dna[:]
 
 	def mutation(self, propagated_dna):
@@ -76,21 +40,14 @@ class Cell():
 			elif idx == 1:
 				dna[1] = [dna[1][0]+uniform(-0.5,0.5), dna[1][1]*uniform(-0.5,0.5)]
 			elif idx == 2:
-				dna[2] = min(max(2, dna[2] + int(random()*mutation_vision_range)), default_vision_for_food * 2)
+				dna[2] = min(max(2, dna[2] + int(random()*mutation_vision_range)), default_vision_for_food*2 )
 			elif idx == 3:
-				dna[3] = min(max(2, dna[3] + int(random()*mutation_vision_range)), default_vision_for_poison * 2)
+				dna[3] = min(max(2, dna[3] + int(random()*mutation_vision_range)), default_vision_for_poison*2)
 			elif idx == 4:
 				dna[4] = min( max(-default_desire_for_food*2 ,dna[4] + int(uniform(-default_desire_for_food, default_desire_for_food)*mutation_desire_range)), default_desire_for_food*2)
 			elif idx == 5:
 				dna[5] = min( max(-default_desire_for_poison*2 ,dna[5] + int(uniform(-default_desire_for_poison, default_desire_for_poison)*mutation_desire_range)), default_desire_for_poison*2)
 		return dna
-
-	def draw(self):
-		pygame.draw.circle(canvas, self.color, self.pos, self.radius)
-		pygame.draw.circle(canvas, green, self.pos, self.vision_for_food, 2)
-		pygame.draw.circle(canvas, orange, self.pos, self.vision_for_poison, 2)
-		pygame.draw.line(canvas, blue, self.pos, self.pos + self.speed*self.desire_for_food, 2)
-		pygame.draw.line(canvas, red, self.pos, self.pos + self.speed*self.desire_for_poison, 2)
 
 	def dist(self, point):
 		return sqrt(sum(e*e for e in self.pos - point))
@@ -159,7 +116,6 @@ class Cell():
 	def update(self):
 		self.seek_food(food)
 		self.chase()
-		self.draw()
 		self.move()
 		self.examine()
 		self.selection()
@@ -168,31 +124,9 @@ class Cell():
 			print("candidate :",self.dna)
 
 	def die(self):
-		population.remove(self)
+		DomainEventsQueue().push(CellDeathEvent(self))
 
 	def examine(self):
 		x,y = self.pos[0], self.pos[1]
 		if x < 0 or x > width or y < 0 or y > height or self.health <= 0:
 			self.die()
-
-
-running = True
-while running:
-	canvas.fill(black)
-	#__________________________________________________________________________________________
-	generate_food()
-	generate_food()
-	generate_cells()
-	for meal in food:
-		pygame.draw.circle(canvas, green, meal, 5, 2)
-	for potion in poison:
-		pygame.draw.circle(canvas, orange, potion, 5)
-	#__________________________________________________________________________________________
-	pygame.display.update()
-	clock.tick(fps)
-	for event in pygame.event.get():
-		if event.type == pygame.QUIT:
-			running = False
-
-pygame.quit()
-quit()
