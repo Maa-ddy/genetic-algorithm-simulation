@@ -1,32 +1,28 @@
 import pygame
-from random import random, uniform
-from math import sqrt
-import numpy
 
-from .simulation import Simulation
-from .display import Gui
+
+from simulation import Simulation
+from display import Gui
 
 
 
 
 class App():
 	def __init__(self):
-		self._init_pygame_attributes()
-		self.running = True
 		self.simulation = Simulation()
-		self.gui = Gui(self.simulation)
+		self._init_pygame_attributes(self.simulation)
+		self.gui = Gui(self.canvas, self.simulation)
+		self.running = True
 
-	def _init_pygame_attributes(self):
-		self.width = 1000
-		self.height = 800
-		self.dimensions = (width, height)
-		self.fps = 30
+	def _init_pygame_attributes(self, simulation):
+		dimensions = simulation.get_dimensions()
+		self.fps = 60
 		self.canvas = pygame.display.set_mode(dimensions)
 		self.clock = pygame.time.Clock()
 	
 	def _tick(self):
 		self.simulation.update()
-		clock.tick(fps)
+		self.clock.tick(self.fps)
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				running = False
@@ -36,7 +32,7 @@ class App():
 		self.gui.render()
 	
 	def run(self):
-		while running:
+		while self.running:
 			self._render()
 			self._tick()
 			
