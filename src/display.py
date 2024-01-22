@@ -3,21 +3,21 @@ from .entities.cell import Cell
 
 class Gui():
 	
-    def __init__(self):
-        self.queue = {}
+    def __init__(self, simulation):
+        self.simulation = simulation
 
-    def push(self, display_obj):
-        self.queue.add(display_obj.id, display_obj)
-    
-    def pop(self, display_obj):
-        self.queue.pop(display_obj.id, None)
+    def _build_display_objs(self):
+        cells = [DisplayCell(cell) for cell in self.simulation.population.values()]
+        food = [DisplayFood(food) for food in self.simulation.food]
+        poison = [DisplayPoison(poison) for poison in self.simulation.poison]
+        return cells + food + poison
 	
     def clear(self):
         canvas.fill(black)
 	
     def render(self):
         self.clear()
-        for display_obj in self.queue:
+        for display_obj in self._build_display_objs():
             display_obj.render()
         pygame.display.update()
 
@@ -30,7 +30,6 @@ class DisplayObj():
     orange = (240, 110, 40)
     blue = (7, 90, 180)
     red = (220, 10, 40)
-    cell_color = cyan
     
     def __init__(self):
         pass

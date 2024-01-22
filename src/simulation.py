@@ -1,13 +1,15 @@
-from .entities.domain_events import DomainEventsQueue, CellDeathEvent, NewbornCellEvent
+from .entities.domain_events import DomainEventQueue, CellDeathEvent, NewbornCellEvent
+from .entities.cell import Cell
 
 class Simulation():
 	max_food = 5000
 	poison_generation_rate = 0.1
+	max_population = 20
 	
 	def __init__(self):
 		self.food = []
 		self.poison = []
-		self.population = []
+		self.population = {}
 		self.init_food(count=30)
 		self.init_population(count=10)
 	
@@ -18,7 +20,7 @@ class Simulation():
 	def init_population(self, count=10):
 		for k in range(count):
 			x, y = list(map(int,[20 + random() * (width - 20) , 20 + random() * (height - 20)]))
-			self.population.append(Cell(x,y))
+			Cell(x,y)
 	
 	def generate_food(self):
 		if len(self.food) <= Simulation.max_food:
@@ -32,7 +34,7 @@ class Simulation():
 		if len(self.population) < 4 or random() < 0.001:
 			random_pos = tuple(map(int, (10 + random() * (height - 10), 10 + random() * (width - 10))))
 			random_dna = [
-				int(random() * max_cell_radius) + 4, 
+				int(random() * Cell.max_radius) + 4, 
 				[uniform(-2, 2), uniform(-2, 2)], 
 				int(random() * default_vision_for_food) + 5, 
 				int(random() * default_vision_for_poison) + 5, 
@@ -41,22 +43,26 @@ class Simulation():
 				1
 			]
 			self.population.append(Cell(*random_pos, random_dna))
-	def update_population(self):
-		for cell in self.population:
+	def update(self):
+		for cell_id, cell in self.population.items():
 			cell.update()
             
 	def newborn(self, cell):
-		self.population.append(cell)
+		if len(self.population) < Simulation.max_population:
+			self.population[id(cell)] = cell
+	
+	def death(self, cell):
+		self.population.pop(id(cell))
 
-class EventsDispatcher():
+class EventDispatcher():
 
 	def __init__(self, simulation):
-		DomainEventsQueue().subscribe(self)
-
-	def __init__(self):
-		DomainEventsQueue().subscribe(self)
+		DomainEventQueue().subscribe(self)
+		self.simulation = simulation
 
 	def notify(self, event):
 		if type(event) is NewbornCellEvent:
 			simulation.newborn(event.data)
-	
+		elif type(event) is CellDeathEvent:
+			simulation.death(event.data)
+			
