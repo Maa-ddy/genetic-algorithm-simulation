@@ -4,8 +4,11 @@ class DomainEventQueue():
     singleton_instance = None
 
     def __init__(self):
+        pass
+    
+    def get_instance():
         if DomainEventQueue.singleton_instance is None:
-            DomainEventQueue.singleton_instance = __init_instance(self)
+            DomainEventQueue.singleton_instance = DomainEventQueue().__init_instance()
         return DomainEventQueue.singleton_instance
     
     def __init_instance(self):
