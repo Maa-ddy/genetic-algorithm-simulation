@@ -1,12 +1,12 @@
 
-class DomainEventsQueue():
+class DomainEventQueue():
 
     singleton_instance = None
 
     def __init__(self):
-        if DomainEventsQueue.singleton_instance is None:
-            DomainEventsQueue.singleton_instance = __init_instance(self)
-        return DomainEventsQueue.singleton_instance
+        if DomainEventQueue.singleton_instance is None:
+            DomainEventQueue.singleton_instance = __init_instance(self)
+        return DomainEventQueue.singleton_instance
     
     def __init_instance(self):
         self.queue = []
